@@ -1,13 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 
 import { NextResponse } from "next/server";
-import OpenAI from "openai"
+import { HfInference } from "@huggingface/inference";
 
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENAI_API_KEY,
-
-})
+const hf = new HfInference(process.env.HF_API_TOKEN);
 
 export async function POST(req:Request) {
     try{
@@ -19,28 +15,45 @@ export async function POST(req:Request) {
        if(!userId){
         return new NextResponse("Unauthorized",{status:401});
        }
-       if(!openai.apiKey){
-         return new NextResponse("OpenAI API Key not configured",{status:500});
-       }
+      
        if(!prompt){
         return new NextResponse("Messages are required",{status:400});
        }
        if(!amount){
-        return new NextResponse("Amount is required",{status:400});
+        return new NextResponse("Amount are required",{status:400});
        }
        if(!resolution){
-        return new NextResponse("Resolution is required",{status:400});
+        return new NextResponse("Resolutions are required",{status:400});
        }
-      
-       const response = await openai.images.generate({
-        model: "dall-e-3",
-        prompt:prompt,
-        n: Math.min(parseInt(amount, 10), 1),
-        size:resolution
-      })
-      
-       console.log(response);
-     return NextResponse.json(response.data);
+       const length=parseFloat(amount);
+     
+       const blobs = await Promise.all(
+         Array.from({ length:length}).map(async() => {
+          const result = await hf.textToImage({
+            model: process.env.IMAGE_MODEL_URL,
+            inputs: prompt+"different image than previous",
+            parameters: { 
+              num_inference_steps: 5,
+            },
+            provider: "hf-inference",
+          })
+         
+          return result;
+         }
+          
+         )
+       );
+   
+       const imageBuffers = await Promise.all(blobs.map(async (blob) => {
+         const buffer = await blob.arrayBuffer();
+         return Buffer.from(buffer).toString("base64");
+       }));
+   
+       return NextResponse.json({ 
+         images: imageBuffers.map((img) => `data:image/png;base64,${img}`) 
+       });
+   
+
     }catch(error){
         console.log("[IMAGE_ERROR]",error);
         return new NextResponse("Internal Error",{status:500});
