@@ -1,8 +1,8 @@
+import { checkApiLimit, increaseApiLimit } from "@/lib/api-limit";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import OpenAI from "openai"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
-
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENAI_API_KEY,
@@ -30,12 +30,17 @@ export async function POST(req:Request) {
        if(!messages){
         return new NextResponse("Messages are required",{status:400});
        }
-
+       
+        const freeTrial = await checkApiLimit();
+          if(!freeTrial){
+              return new NextResponse("Free Trial has expired",{status:403});
+    
+          }
        const completion = await openai.chat.completions.create({
         model: "openai/gpt-3.5-turbo",
         messages:[instructionMessage,...messages]
       })
-     
+      await increaseApiLimit();
      return NextResponse.json(completion.choices[0].message);
     }catch(error){
         console.log("[CODE_ERROR]",error);

@@ -18,12 +18,14 @@ import Loader from "@/components/loader";
 import { cn } from "@/lib/utils";
 import UserAvatar from "@/components/user-avatar";
 import BotAvatar from "@/components/bot-avatar";
+import { useProModal } from "@/hooks/user-pro-modal";
 
 
 const MusicPage = () => {
     const router=useRouter();
     const [music,setMusic]=  useState<string>();
-
+   
+   const proModal=useProModal();
     const form =useForm<z.infer<typeof formSchema>>({
         resolver:zodResolver(formSchema),
         defaultValues:{
@@ -39,9 +41,10 @@ const MusicPage = () => {
          setMusic(response.data.audio)
          form.reset();
 
-       }catch(error){
-        console.log(error)
-       }finally{
+       }catch(error:any){
+        if(error?.response?.status === 403){
+          proModal.onOpen();
+       }}finally{
          router.refresh();
        }
     }
@@ -65,7 +68,7 @@ const MusicPage = () => {
                      <FormField
                       name="prompt"
                       render={({field})=>(
-                        <FormItem className="col-span-12 lg:col-span-18">
+                        <FormItem className="col-span-12 lg:col-span-10">
                             <FormControl className="m-0 p-0">
                                <Input 
                                  className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"

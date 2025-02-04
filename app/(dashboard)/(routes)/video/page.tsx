@@ -18,12 +18,13 @@ import Loader from "@/components/loader";
 import { cn } from "@/lib/utils";
 import UserAvatar from "@/components/user-avatar";
 import BotAvatar from "@/components/bot-avatar";
+import { useProModal } from "@/hooks/user-pro-modal";
 
 
 const VideoPage = () => {
     const router=useRouter();
     const [video,setVideo]=  useState<string>();
-
+    const proModal=useProModal();
     const form =useForm<z.infer<typeof formSchema>>({
         resolver:zodResolver(formSchema),
         defaultValues:{
@@ -40,9 +41,10 @@ const VideoPage = () => {
          setVideo(response.data[1]?.video?.url)
          form.reset();
 
-       }catch(error){
-        console.log(error)
-       }finally{
+       }catch(error:any){
+        if(error?.response?.status === 403){
+          proModal.onOpen();
+       }}finally{
          router.refresh();
        }
     }
@@ -66,7 +68,7 @@ const VideoPage = () => {
                      <FormField
                       name="prompt"
                       render={({field})=>(
-                        <FormItem className="col-span-12 lg:col-span-18">
+                        <FormItem className="col-span-12 lg:col-span-10">
                             <FormControl className="m-0 p-0">
                                <Input 
                                  className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"

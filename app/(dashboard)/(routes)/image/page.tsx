@@ -21,6 +21,7 @@ import BotAvatar from "@/components/bot-avatar";
 import { Select, SelectValue,SelectContent, SelectTrigger, SelectItem } from "@/components/ui/select";
 import { Card, CardFooter } from "@/components/ui/card";
 import Image from "next/image";
+import { useProModal } from "@/hooks/user-pro-modal";
 
 
 
@@ -28,7 +29,7 @@ const ImagePage = () => {
     const router=useRouter();
     const [images,setImages]=useState<string[]>([]);
 
-
+    const proModal=useProModal();
     const form =useForm<z.infer<typeof formSchema>>({
         resolver:zodResolver(formSchema),
         defaultValues:{
@@ -50,8 +51,10 @@ const ImagePage = () => {
          console.log(response.data.image,images);
          form.reset();
 
-       }catch(error){
-        console.log(error)
+       }catch(error:any){
+        if(error?.response?.status === 403){
+          proModal.onOpen();
+       }
        }finally{
          router.refresh();
        }
@@ -76,7 +79,7 @@ const ImagePage = () => {
                      <FormField
                       name="prompt"
                       render={({field})=>(
-                        <FormItem className="col-span-12 lg:col-span-18">
+                        <FormItem className="col-span-12">
                             <FormControl className="m-0 p-0">
                                <Input 
                                  className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
@@ -92,7 +95,7 @@ const ImagePage = () => {
                        control={form.control}
                         name="amount"
                         render={({field})=>(
-                          <FormItem className="col-span-12 lg:col-span-6">
+                          <FormItem className="col-span-12 lg:col-span-5">
                               <Select 
                                disabled={isLoading}
                                onValueChange={field.onChange}
@@ -121,7 +124,7 @@ const ImagePage = () => {
                        control={form.control}
                         name="resolution"
                         render={({field})=>(
-                          <FormItem className="col-span-12 lg:col-span-2 ">
+                          <FormItem className="col-span-12 lg:col-span-5 ">
                               <Select 
                                disabled={isLoading}
                                onValueChange={field.onChange}
