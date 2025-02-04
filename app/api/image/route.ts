@@ -11,7 +11,8 @@ export async function POST(req:Request) {
        const body= await req.json();
        const {prompt,amount="1",resolution="512x512"}=body;
 
-
+       const instructionMessage : string="You must create each time different image than previous"
+       
        if(!userId){
         return new NextResponse("Unauthorized",{status:401});
        }
@@ -31,7 +32,7 @@ export async function POST(req:Request) {
          Array.from({ length:length}).map(async() => {
           const result = await hf.textToImage({
             model: process.env.IMAGE_MODEL_URL,
-            inputs: prompt+"different image than previous",
+            inputs: instructionMessage+prompt,
             parameters: { 
               num_inference_steps: 5,
             },
