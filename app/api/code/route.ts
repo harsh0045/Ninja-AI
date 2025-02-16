@@ -1,8 +1,12 @@
 import { checkApiLimit, increaseApiLimit } from "@/lib/api-limit";
+
 import { auth } from "@clerk/nextjs/server";
+import axios from "axios";
 import { NextResponse } from "next/server";
 import OpenAI from "openai"
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+
+
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENAI_API_KEY,
@@ -14,6 +18,10 @@ const instructionMessage : ChatCompletionMessageParam={
   content:"You are a code generator.You must answer code only in markdown code snippets and must answer explanation part of the code line by line with complete depth understanding below the complete code not necessarily in markdown."
 }
 
+const getSubscriptionStatus = async () => {
+  const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/subscription`);
+  return data.isPro;
+};
 
 export async function POST(req:Request) {
     try{
@@ -32,15 +40,16 @@ export async function POST(req:Request) {
        }
        
         const freeTrial = await checkApiLimit();
-          if(!freeTrial){
-              return new NextResponse("Free Trial has expired",{status:403});
-    
-          }
+        const isPro = await getSubscriptionStatus();
+        if(!freeTrial && !isPro){
+            return new NextResponse("Free Trial has expired",{status:403});
+
+        }
        const completion = await openai.chat.completions.create({
         model: "openai/gpt-3.5-turbo",
         messages:[instructionMessage,...messages]
       })
-      await increaseApiLimit();
+      if(!isPro)await increaseApiLimit();
      return NextResponse.json(completion.choices[0].message);
     }catch(error){
         console.log("[CODE_ERROR]",error);

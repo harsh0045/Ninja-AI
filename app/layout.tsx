@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ModalProvider } from "@/components/modal-provider";
+import ToasterProvider from "@/components/toaster-provider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,8 +31,11 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <ModalProvider/>
+          <ToasterProvider/>
           {children}
+          <script src="https://checkout.razorpay.com/v1/magic-checkout.js"></script>
         </body>
+        
       </html>
     </ClerkProvider>
   );

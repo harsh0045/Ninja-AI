@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Code, ImageIcon, LayoutDashboard, MessageSquare, Music, Settings, VideoIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import FreeCounter from "./free-counter";
+import { useSubscription } from "@/hooks/use-subscription";
 
 const montserrat=Montserrat({
     weight:"600",
@@ -63,6 +64,7 @@ interface SidebarProps{
 }
 const Sidebar = ({apiLimitCount}:SidebarProps) => {
     const pathname=usePathname()
+    const {isPro}=useSubscription();
   return (
     <div className="space-y-4 py-4 flex flex-col h-full bg-[#111827] text-white">
        <div className="px-3 py-2 flex-1">
@@ -93,9 +95,9 @@ const Sidebar = ({apiLimitCount}:SidebarProps) => {
               ))}
          </div>
        </div>
-       <FreeCounter 
+       {isPro ===null ? "" : !isPro && <FreeCounter 
          apiLimitCount={apiLimitCount}
-       />
+       />}
     </div>
   )
 }

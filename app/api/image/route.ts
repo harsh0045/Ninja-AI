@@ -3,6 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { HfInference } from "@huggingface/inference";
 import { checkApiLimit, increaseApiLimit } from "@/lib/api-limit";
+import axios from "axios";
+
+const getSubscriptionStatus = async () => {
+  const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/subscription`);
+  return data.isPro;
+};
 
 const hf = new HfInference(process.env.HF_API_TOKEN);
 
@@ -28,11 +34,12 @@ export async function POST(req:Request) {
         return new NextResponse("Resolutions are required",{status:400});
        }
        
-      const freeTrial = await checkApiLimit();
-      if(!freeTrial){
-          return new NextResponse("Free Trial has expired",{status:403});
-
-      }
+       const freeTrial = await checkApiLimit();
+             const isPro = await getSubscriptionStatus();
+             if(!freeTrial && !isPro){
+                return new NextResponse("Free Trial has expired",{status:403});
+      
+             }
        const length=parseFloat(amount);
      
        const blobs = await Promise.all(
@@ -57,7 +64,7 @@ export async function POST(req:Request) {
          return Buffer.from(buffer).toString("base64");
        }));
       
-      await increaseApiLimit();
+     if(!isPro) await increaseApiLimit();
        return NextResponse.json({ 
          images: imageBuffers.map((img) => `data:image/png;base64,${img}`) 
        });

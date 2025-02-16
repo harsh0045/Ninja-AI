@@ -7,6 +7,7 @@ import { Progress } from './ui/progress';
 import { Button } from './ui/button';
 import { Zap } from 'lucide-react';
 import { useProModal } from '@/hooks/user-pro-modal';
+import { useSubscription } from '@/hooks/use-subscription';
 
 
 interface FreeCounterProps {
@@ -16,12 +17,13 @@ interface FreeCounterProps {
 
 const FreeCounter = ({apiLimitCount}:FreeCounterProps) => {
     const proModal= useProModal();
-
+   
     const [mounted,setMounted]=useState(false);
     useEffect(()=>{
         setMounted(true);
     },[]);
     if(!mounted)return null;
+
   return (
     <div className='px-3 '>
         <Card className='bg-white/10 border-0 '>

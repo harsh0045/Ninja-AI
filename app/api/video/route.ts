@@ -3,8 +3,13 @@ import { NextResponse } from "next/server";
 
 import { Client } from "@gradio/client";
 import { checkApiLimit, increaseApiLimit } from "@/lib/api-limit";
+import axios from "axios";
 
 const client = await Client.connect("CereusTech/Sepia_Text_to_Video", { hf_token: `hf_${process.env.HFW_API_TOKEN}`});
+const getSubscriptionStatus = async () => {
+    const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/subscription`);
+    return data.isPro;
+  };
 export async function POST(req:Request) {
     try {
         const { userId } = await auth();
@@ -20,8 +25,9 @@ export async function POST(req:Request) {
         }
         
         const freeTrial = await checkApiLimit();
-        if(!freeTrial){
-          return new NextResponse("Free Trial has expired",{status:403});
+        const {isPro} = await getSubscriptionStatus ();
+        if(!freeTrial && !isPro){
+            return new NextResponse("Free Trial has expired",{status:403});
 
         }
      
@@ -31,7 +37,7 @@ export async function POST(req:Request) {
           aspect_ratio: "landscape", 
       });
         
-      await increaseApiLimit();
+      if(!isPro) await increaseApiLimit();
 
       return NextResponse.json(result.data);
     } catch (error) {
